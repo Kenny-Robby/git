@@ -1,0 +1,169 @@
+
+
+
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block content %}
+{% load customfilter %}
+<div class="container-fluid">
+    <h4>Selected Subject: {{ subject }}</h4>
+    <form action="" id="result-form">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ result.id }}">
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <div class="form-group mb-3 ">
+                    <label for="semester" class="control-label">Semester</label>
+                    <input type="text" id="semester" name="semester" class="form-control form-control-sm py-1 rounded-0" value="{{ result.semester }}" required>
+                </div>
+            </div>
+        </div>
+        <hr> 
+       
+
+        <div class="row align-items-end">
+            
+            </div>
+ 
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <table class="table table-bordered table-striped" id="student-score">
+                    <colgroup>
+                        <col width="10%">
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="5%">
+                        <col width="5%">
+                    </colgroup>
+                    <thead>
+                        <tr class="bg-info bg-gradient">
+                            <th class="px-2 py-1 text-center">Student ID</th>
+                            <th class="px-2 py-1 text-center">Full Name</th>
+                            <th class="px-2 py-1 text-center">Input CA</th>
+                            <th class="px-2 py-1 text-center">Input SE</th>
+                            <th class="px-2 py-1 text-center">Total</th>
+                            <th class="px-2 py-1 text-center">Grade</th>
+                            <th class="px-2 py-1 text-center">Status</th>
+                            <th class="px-2 py-1 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td class="px-2 py-1 text-center">{{ student.student_id }}</td>
+                            <td class="px-2 py-1 text-center">{{ student.get_name }}</td>
+                            <td class="px-2 py-1 text-center"><input type="number" id="input_ca_{{ student.id }}" class="form-control form-control-sm py-1 rounded-0 input-ca" data-student="{{ student.id }}"></td>
+                            <td class="px-2 py-1 text-center"><input type="number" id="input_se_{{ student.id }}" class="form-control form-control-sm py-1 rounded-0 input-se" data-student="{{ student.id }}"></td>
+                            <td class="px-2 py-1 text-center total" id="total_{{ student.id }}"></td>
+                            <td class="px-2 py-1 text-center total" id="Grade_{{ student.id }}"></td>
+                            <td class="px-2 py-1 text-center total" id="Status_{{ student.id }}"></td>
+                            <td class="px-2 py-1 align-middle text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-primary btn-sm mb-0 rounded-0 dropdown-toggle" type="button" id="actionBtn-{{ result.pk }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Action
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="actionBtn-{{ result.pk }}">
+                                     <li><a class="dropdown-item edit-data d-flex w-100 align-items-center" href="javascript:void(0)" data-url=""><i class="material-icons">edit</i> Edit</a></li>
+                                    <li><a class="dropdown-item delete-data d-flex w-100 align-items-center" href="javascript:void(0)" data-id=""><i class="material-icons">delete</i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <button id="transferMarksBtn" class="btn btn-primary"><a href="result_mgt.html"></a>Transfer Marks</button>
+
+    </form>
+</div>
+{% endblock content %}
+{% block javascripts %}
+
+<script>
+    $(document).ready(function () {
+        // Display the selected subject
+        // var selectedSubject = "{{ selected_subject }}";
+        // if (selectedSubject) {
+        //     $('#selected-subject').text("Selected Subject: " + selectedSubject);
+        // }
+
+        // Automatically calculate total when input fields change
+        $(document).on('input', '.input-ca, .input-se', function () {
+            var studentId = $(this).data('student');
+            var inputCa = parseFloat($('#input_ca_' + studentId).val()) || 0;
+            var inputSe = parseFloat($('#input_se_' + studentId).val()) || 0;
+            var total = (inputCa + inputSe).toFixed(2);
+            
+            $('#total_' + studentId).text(total);
+
+            // Calculate grade and status
+            var grade, status;
+            if (total >= 70) {
+                grade = 'A';
+                status = 'Pass';
+            } else if (total >= 60) {
+                grade = 'B+';
+                status = 'Pass';
+            } else if (total >= 50) {
+                grade = 'B';
+                status = 'Pass';
+            } else if (total >= 40) {
+                grade = 'C';
+                status = 'Pass';
+            } else if (total >= 35) {
+                grade = 'D';
+                status = 'Fail';
+            } else {
+                grade = 'F';
+                status = 'Fail';
+            }
+
+            $('#Grade_' + studentId).text(grade);
+            $('#Status_' + studentId).text(status);
+        });
+
+        // Function to transfer marks to manage_result page
+        function transferMarks() {
+            var marks = [];
+            // Loop through each row in the table
+            $('table#student-score tbody tr').each(function() {
+                var studentId = $(this).find('.total').attr('id').split('_')[1];
+                var total = parseFloat($(this).find('.total').text()) || 0;
+                marks.push({ studentId: studentId, mark: total });
+            });
+
+            // Send marks to manage_result page
+            $.ajax({
+                url: "{% url 'manage-result' %}",
+                method: 'POST',
+                dataType: 'json',
+                data: { marks: JSON.stringify(marks), csrfmiddlewaretoken: '{{ csrf_token }}' }, // Include CSRF token
+                success: function(response) {
+                    // Handle success response
+                    alert('Marks transferred successfully');
+                    // Redirect to manage_result page after successful transfer
+                    window.location.href = "{% url 'manage-result' %}";
+                },
+                error: function(xhr, status, error) {
+                    // Handle error response
+                    console.error(xhr.responseText);
+                }
+            });
+        }
+
+        // Bind click event to transfer marks button
+        $('#transferMarksBtn').click(function() {
+            transferMarks();
+        });
+    });
+</script>
+
+{% endblock javascripts %}

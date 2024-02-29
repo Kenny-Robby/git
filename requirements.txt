@@ -1,0 +1,4 @@
+Repository System) . In this system,  a researcher will register and then he shall be able to upload details about his research including the pdf of the research paper. At times he can edit the details or delete his research or view it whenever he wants to.
+Another user of the system shall be able to enter the system and navigate through the pages without registration and this user will be able to view the researches uploaded ( and can be based on a certain category for ease of access) and download them when needed. he can also comment on them 
+
+so give me the full source code for such a project... clearly defining the file names and every connection
